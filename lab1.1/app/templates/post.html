@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+
+
+    <div class="jumbotron py-3">
+        <h1 class="display-4">{{ post.title }}</h1>
+        <p class="lead">{{ post.author }}, {{ post.date.strftime("%d.%m.%Y") }}</p>
+        <hr class="my-2">
+    </div>
+
+    <div class="text-center mb-4">
+        <img src="{{ url_for('static', filename='images/' + post.image_id) }}" class="img-thumbnail" alt="...">
+    </div>
+
+    <div class="mb-4">
+        <p>{{ post.text }}</p>
+    </div>
+
+    <div>
+        <h2 class="mb-3">Комментарии</h2>
+
+        <div class="alert alert-light" role="alert">
+            <h4 class="alert-heading">Оставить комментарий</h4>
+            <textarea class="form-control mb-3" rows="3"></textarea>
+            <button type="submit" class="btn btn-primary">Опубликовать</button>
+        </div>
+
+        {% for comment in post.comments %}
+        <div class="media mb-4">
+            <img class="mr-3 rounded-circle" src="{{ url_for('static', filename='images/avatar.jpg') }}" alt="" style="width: 64px; height: 64px;">
+            <div class="media-body">
+                <h5 class="mt-0">{{ comment.author }}</h5>
+                {{ comment.text }}
+
+                {% for subcomment in comment.replies %}
+                <div class="media mt-4 ms-5 me-3">
+                    <a class="mr-3" href="#">
+                        <img class="rounded-circle" src="{{ url_for('static', filename='images/avatar.jpg') }}" alt="" style="width: 48px; height: 48px;">
+                    </a>
+                    <div class="media-body">
+                        <h6 class="mt-0">{{ subcomment.author }} </h6>
+                        {{ subcomment.text }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
