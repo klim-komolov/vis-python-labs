@@ -87,4 +87,5 @@ def form_phone():
     return render_template('form_phone.html', error_message=error_message, original_phone_number=original_phone_number, formatted_phone_number=formatted_phone_number)
 
 
-application.run(debug=True)
+if name == '__main__':
+    app.run(debug=True)
