@@ -22,6 +22,10 @@ def headers():
 @app.route('/cookies')
 def cookies():
     resp = make_response(render_template('cookies.html', request=request))
+    if 'cookie' in request.cookies:
+        resp.delete_cookie('cookie')
+    else:
+        resp.set_cookie('cookie', 'cock')
     return resp
 
 
@@ -61,28 +65,34 @@ def form_phone():
     error_message = ''
     original_phone_number = ''
     formatted_phone_number = ''
+
     if request.method == 'POST':
         original_phone_number = request.form['param1']
-        valid_chars = "0123456789 ()-+."
-        digits = ''
-
+        
+        # Проверка валидности номера телефона
+        
         for char in original_phone_number:
-            if char in valid_chars:
-                if char.isdigit():
-                    digits += char
-            else:
-                error_message = 'Недопустимый ввод. В номере телефона встречаются недопустимые символы.'
+            if char not in '0123456789 ()-+.':
+                error_message = "Недопустимый ввод. В номере телефона встречаются недопустимые символы."
                 break
-
-        if not error_message:
-            digit_count = len(digits)
-
-            if digit_count == 11 and original_phone_number.startswith(('8', '+7')):
-                formatted_phone_number = f'8-{digits[1:4]}-{digits[4:7]}-{digits[7:9]}-{digits[9:11]}'
-            elif digit_count == 10:
-                formatted_phone_number = f'8-{digits[0:3]}-{digits[3:6]}-{digits[6:8]}-{digits[8:10]}'
+                
+        if not error_message:        
+            digits = ''.join(filter(str.isdigit, original_phone_number))
+            if original_phone_number.startswith('+7') or original_phone_number.startswith('8'):
+                if len(digits) != 11:
+                    error_message = "Недопустимый ввод. Неверное количество цифр."
             else:
-                error_message = 'Недопустимый ввод. Неверное количество цифр.'
+                if len(digits) != 10:
+                    error_message = "Недопустимый ввод. Неверное количество цифр."
+
+        # Форматирование номера телефона
+        if not error_message:
+            if digits.startswith('+7'):
+                digits = digits[2:]
+            elif digits.startswith(('7', '8')):
+                digits = digits[1:]
+
+            formatted_phone_number = f'8-{digits[:3]}-{digits[3:6]}-{digits[6:8]}-{digits[8:]}'
 
     return render_template('form_phone.html', error_message=error_message, original_phone_number=original_phone_number, formatted_phone_number=formatted_phone_number)
 
