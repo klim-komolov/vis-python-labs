@@ -4,6 +4,7 @@ from mysql_db import MySQL
 
 
 app = Flask(__name__)
+application = app
 
 app.config.from_pyfile('config.py')
 
