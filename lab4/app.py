@@ -214,9 +214,9 @@ def change_password():
             errors['newPassword2'] = 'Новые пароли не совпадают'
             return render_template('users/change_password.html', errors=errors)
 
-        password_status, password_error = check_password(new_password1)
+        password_status, password_errors = check_password(new_password1)
         if not password_status:
-            errors['newPassword1'] = (f'Ошибка: {password_error}\n\n'
+            errors['newPassword1'] = (f'Ошибки:\n{", ".join(password_errors)}\n\n'
                                       'Пароль должен соответствовать требованиям: \n'
                                       'Не менее 8 символов\n'
                                       'Не более 128 символов\n'
