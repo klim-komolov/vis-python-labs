@@ -92,23 +92,21 @@ def register():
             if not all(char in valid_chars for char in login):
                 errors['login'] = 'Логин должен состоять только из латинских букв и цифр'
 
-
     if not password:
         errors['password'] = 'Поле не может быть пустым'
     else:
-        password_status, password_error = check_password(password)
+        password_status, password_errors = check_password(password)
         if not password_status:
-            errors['password'] =  (f'Ошибка: {password_error}\n\n'
-                                        'Пароль должен соответствовать требованиям: \n'
-                                        'Не менее 8 символов\n'
-                                        'Не более 128 символов\n'
-                                        'Как минимум одна заглавная и одна строчная буква\n'
-                                        'Только латинские или кириллические буквы\n'
-                                        'Как минимум одна цифра\n'
-                                        'Только арабские цифры\n'
-                                        'Без пробелов\n'
-                                        'Другие допустимые символы:~ ! ? @ # $ % ^ & * _ - + ( ) [ ] { } > < |  . , : ;\n')
-
+            errors['password'] = (f'Ошибки:\n{", ".join(password_errors)}\n\n'
+                                  'Пароль должен соответствовать требованиям: \n'
+                                  'Не менее 8 символов\n'
+                                  'Не более 128 символов\n'
+                                  'Как минимум одна заглавная и одна строчная буква\n'
+                                  'Только латинские или кириллические буквы\n'
+                                  'Как минимум одна цифра\n'
+                                  'Только арабские цифры\n'
+                                  'Без пробелов\n'
+                                  'Другие допустимые символы: ~ ! ? @ # $ % ^ & * _ - + ( ) [ ] { } > < | . , : ;\n')
 
     if not first_name:
         errors['first_name'] = 'Поле не может быть пустым'
@@ -244,8 +242,10 @@ def change_password():
         return render_template('users/change_password.html',errors={})
 
 def check_password(password):
+    errors = []
+
     if len(password) < 8 or len(password) > 128:
-        return False, ''
+        errors.append('Пароль должен быть не меньше 8 и не больше 128 символов')
 
     has_upper = False
     has_lower = False
@@ -262,17 +262,16 @@ def check_password(password):
             has_digit = True
 
         if char not in valid_chars:
-            return False, ''
+            errors.append('Разрешено использовать только латинские или кириллические буквы и допустимые символы')
 
     if not has_upper:
-        return False, ''
+        errors.append('Пароль должен содержать хотя бы одну заглавную букву')
     if not has_lower:
-        return False, ''
+        errors.append('Пароль должен содержать хотя бы одну прописную букву')
     if not has_digit:
-        return False, ''
+        errors.append('Пароль должен содержать хотя бы одну цифру')
 
-    return True, ''
-
+    return len(errors) == 0, errors
 
 
 if __name__ == '__main__':
