@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">Список книг</h1>
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for book in books %}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text"><strong>Автор:</strong> {{ book.author }}</p>
+                <p class="card-text"><strong>Год выпуска:</strong> {{ book.year }}</p>
+                <p class="card-text"><strong>Рейтинг:</strong> {{ book.average_rating }}</p>
+                <p class="card-text"><strong>Отзывы:</strong> {{ book.reviews_count }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="mt-4">
+    <!-- Pagination controls can be added here -->
+</div>
+{% endblock %}
