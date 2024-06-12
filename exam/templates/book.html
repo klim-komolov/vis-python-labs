@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">{{ book.title }}</h1>
+<img src="{{ url_for('static', filename='covers/' ~ book.cover.file_name) }}" class="img-fluid mb-3" alt="{{ book.title }}">
+<p><strong>Автор:</strong> {{ book.author }}</p>
+<p><strong>Год выпуска:</strong> {{ book.year }}</p>
+<p><strong>Издательство:</strong> {{ book.publisher }}</p>
+<p><strong>Количество страниц:</strong> {{ book.pages }}</p>
+<p><strong>Описание:</strong> {{ book.description }}</p>
+{% if book.reviews %}
+    <h2>Отзывы</h2>
+    <ul>
+        {% for review in book.reviews %}
+            <li>
+                <p><strong>{{ review.user.first_name }} {{ review.user.last_name }}</strong></p>
+                <p><strong>Рейтинг:</strong> {{ review.rating }}</p>
+                <p>{{ review.text }}</p>
+                <p><em>{{ review.created_at }}</em></p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Нет отзывов.</p>
+{% endif %}
+{% if current_user.is_authenticated %}
+    <h2>Добавить отзыв</h2>
+    <form action="{{ url_for('add_review') }}" method="post">
+        <input type="hidden" name="book_id" value="{{ book.id }}">
+        <div class="mb-3">
+            <label for="rating" class="form-label">Рейтинг</label>
+            <input type="number" name="rating" id="rating" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="text" class="form-label">Отзыв</label>
+            <textarea name="text" id="text" class="form-control" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Добавить отзыв</button>
+    </form>
+{% endif %}
+{% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator'] %}
+    <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-warning">Редактировать</a>
+{% endif %}
+{% if current_user.is_authenticated and current_user.role.name == 'admin' %}
+    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-book-id="{{ book.id }}" data-book-title="{{ book.title }}">Удалить</button>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Удаление книги</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Вы уверены, что хотите удалить книгу <span id="bookTitle"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Да</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const bookId = button.getAttribute('data-book-id');
+        const bookTitle = button.getAttribute('data-book-title');
+
+        const modalTitle = deleteModal.querySelector('.modal-title');
+        const modalBodySpan = deleteModal.querySelector('.modal-body #bookTitle');
+        const deleteForm = deleteModal.querySelector('#deleteForm');
+
+        modalTitle.textContent = 'Удаление книги';
+        modalBodySpan.textContent = bookTitle;
+        deleteForm.action = '/book/delete/' + bookId;
+    });
+</script>
+{% endblock %}

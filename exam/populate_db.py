@@ -26,35 +26,44 @@ def create_users():
     db.session.commit()
 
 def create_genres():
-    genres = ['Fiction', 'Science', 'Biography', 'Fantasy']
+    genres = ['Фантастика', 'Наука', 'Биография', 'Фэнтези']
     for genre_name in genres:
         genre = Genre(name=genre_name)
         db.session.add(genre)
     db.session.commit()
 
-def create_books():
+def create_cover():
+    cover = Cover(
+        file_name='book.jpg',
+        mime_type='image/jpeg',
+        md5_hash='d41d8cd98f00b204e9800998ecf8427e'
+    )
+    db.session.add(cover)
+    db.session.commit()
+    return cover
+
+def create_books(common_cover):
     books = [
         {
             'title': 'Великий Гэтсби',
-            'description': 'Роман, написанный американским писателем Ф. Скоттом Фицджеральдом',
+            'description': 'Роман, написанный американским писателем Ф. Скоттом Фицджеральдом.',
             'year': 1925,
             'publisher': 'Скрибнер',
             'author': 'Ф. Скотт Фицджеральд',
-            'pages': 218
+            'pages': 218,
+            'cover_id': common_cover.id
         },
         {
             'title': 'Убить пересмешника',
-            'description': 'Роман Харпер Ли, опубликованный в 1960 году',
+            'description': 'Роман Харпер Ли, опубликованный в 1960 году.',
             'year': 1960,
             'publisher': 'Джей Би Липпинкотт и компания',
             'author': 'Харпер Ли',
-            'pages': 281
+            'pages': 281,
+            'cover_id': common_cover.id
         }
     ]
     for book_data in books:
-        cover = Cover(file_name='book.jpg', mime_type='image/jpeg', md5_hash='d41d8cd98f00b204e9800998ecf8427e')
-        db.session.add(cover)
-        db.session.commit()
         book = Book(
             title=book_data['title'], 
             description=book_data['description'], 
@@ -62,16 +71,16 @@ def create_books():
             publisher=book_data['publisher'], 
             author=book_data['author'], 
             pages=book_data['pages'], 
-            cover_id=cover.id
+            cover_id=book_data['cover_id']
         )
         db.session.add(book)
     db.session.commit()
 
 def assign_genres_to_books():
-    genre_fiction = Genre.query.filter_by(name='Fiction').first()
-    genre_science = Genre.query.filter_by(name='Science').first()
-    genre_biography = Genre.query.filter_by(name='Biography').first()
-    genre_fantasy = Genre.query.filter_by(name='Fantasy').first()
+    genre_fiction = Genre.query.filter_by(name='Фантастика').first()
+    genre_science = Genre.query.filter_by(name='Наука').first()
+    genre_biography = Genre.query.filter_by(name='Биография').first()
+    genre_fantasy = Genre.query.filter_by(name='Фэнтези').first()
     
     book_gatsby = Book.query.filter_by(title='Великий Гэтсби').first()
     book_mockingbird = Book.query.filter_by(title='Убить пересмешника').first()
@@ -88,7 +97,8 @@ def main():
     create_roles()
     create_users()
     create_genres()
-    create_books()
+    common_cover = create_cover()
+    create_books(common_cover)
     assign_genres_to_books()
 
 if __name__ == "__main__":

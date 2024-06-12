@@ -2,22 +2,80 @@
 
 {% block content %}
 <h1 class="mb-4">Список книг</h1>
-<div class="row row-cols-1 row-cols-md-2 g-4">
-    {% for book in books %}
-    <div class="col">
-        <div class="card h-100">
+<div class="row">
+    {% for book in books.items %}
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <img src="{{ url_for('static', filename='covers/' ~ book.cover.file_name) }}" class="card-img-top" alt="{{ book.title }}">
             <div class="card-body">
                 <h5 class="card-title">{{ book.title }}</h5>
-                <p class="card-text"><strong>Автор:</strong> {{ book.author }}</p>
-                <p class="card-text"><strong>Год выпуска:</strong> {{ book.year }}</p>
-                <p class="card-text"><strong>Рейтинг:</strong> {{ book.average_rating }}</p>
-                <p class="card-text"><strong>Отзывы:</strong> {{ book.reviews_count }}</p>
+                <p class="card-text">{{ book.year }}</p>
+                <p class="card-text">{{ book.author }}</p>
+                <p class="card-text">Средняя оценка: {{ book.reviews|map(attribute='rating')|sum / book.reviews|length if book.reviews|length > 0 else 0 }}</p>
+                <p class="card-text">Количество рецензий: {{ book.reviews|length }}</p>
+                <a href="{{ url_for('book', book_id=book.id) }}" class="btn btn-primary">Просмотр</a>
+                {% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator'] %}
+                    <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-warning">Редактировать</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.role.name == 'admin' %}
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-book-id="{{ book.id }}" data-book-title="{{ book.title }}">Удалить</button>
+                {% endif %}
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
-<div class="mt-4">
-    <!-- Pagination controls can be added here -->
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        {% if books.has_prev %}
+        <li class="page-item"><a class="page-link" href="{{ url_for('index', page=books.prev_num) }}">Previous</a></li>
+        {% endif %}
+        {% for page_num in books.iter_pages() %}
+        <li class="page-item {% if page_num == books.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('index', page=page_num) }}">{{ page_num }}</a>
+        </li>
+        {% endfor %}
+        {% if books.has_next %}
+        <li class="page-item"><a class="page-link" href="{{ url_for('index', page=books.next_num) }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+<!-- Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Удаление книги</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Вы уверены, что хотите удалить книгу <span id="bookTitle"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Да</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const bookId = button.getAttribute('data-book-id');
+        const bookTitle = button.getAttribute('data-book-title');
+
+        const modalTitle = deleteModal.querySelector('.modal-title');
+        const modalBodySpan = deleteModal.querySelector('.modal-body #bookTitle');
+        const deleteForm = deleteModal.querySelector('#deleteForm');
+
+        modalTitle.textContent = 'Удаление книги';
+        modalBodySpan.textContent = bookTitle;
+        deleteForm.action = '/book/delete/' + bookId;
+    });
+</script>
 {% endblock %}
