@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="mb-4">Добавление книги</h1>
-{% import 'book_form.html' as forms %}
-{{ forms.book_form(genres=genres) }}
+    <h1>Добавить книгу</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% include 'book_form.html' %}
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
 {% endblock %}
-

@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="mb-4">Редактирование книги</h1>
-{% import 'book_form.html' as forms %}
-{{ forms.book_form(book=book, genres=genres, is_edit=True) }}
+    <h1>Редактировать книгу</h1>
+    <form method="POST">
+        {% include 'book_form.html' %}
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+<a href="{{ url_for('index') }}" class="btn btn-primary">Назад к списку</a>
 {% endblock %}
+
 

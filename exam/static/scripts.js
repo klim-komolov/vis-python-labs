@@ -13,3 +13,12 @@
         modalBodySpan.textContent = bookTitle;
         deleteForm.action = '/book/delete/' + bookId;
     });
+
+    $('#deleteModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget) 
+        var bookId = button.data('bookid') 
+        var bookTitle = button.data('booktitle') 
+        var modal = $(this)
+        modal.find('.modal-body #bookTitle').text(bookTitle)
+        modal.find('.modal-footer form').attr('action', '/book/delete/' + bookId)
+    })
