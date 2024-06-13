@@ -15,6 +15,7 @@ app.config.from_object('config.Config')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager()
+login_manager.login_message = 'Для доступа к данной странице необходимо авторизоваться'
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
@@ -93,14 +94,14 @@ def login():
             flash('Вы успешно вошли в систему.')
             return redirect(url_for('index'))
         else:
-            flash('Неверное имя пользователя или пароль.')
+            flash('Невозможно аутентифицироваться с указанными логином и паролем')
     return render_template('login.html')
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('Вы вышли из системы.')
+    flash('Вы вышли из системы')
     return redirect(url_for('login'))
 
 @app.route('/')
@@ -119,7 +120,7 @@ def book(book_id):
 @login_required
 def add_book():
     if current_user.role.name != 'admin':
-        flash('У вас недостаточно прав для добавления книги')
+        flash('У вас недостаточно прав для выполнения данного действия')
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -162,7 +163,7 @@ def add_book():
             return redirect(url_for('index'))
         except Exception as e:
             db.session.rollback()
-            flash('При сохранении данных возникла ошибка. Проверьте корректность введённых данных.')
+            flash('При сохранении данных возникла ошибка. Проверьте корректность введённых данных')
             return render_template('add_book.html', genres=Genre.query.all())
 
     return render_template('add_book.html', genres=Genre.query.all())
@@ -172,7 +173,7 @@ def add_book():
 def edit_book(book_id):
     book = Book.query.get_or_404(book_id)
     if current_user.role.name not in ['admin', 'moderator']:
-        flash('У вас недостаточно прав для редактирования этой книги')
+        flash('У вас недостаточно прав для выполнения данного действия')
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -205,7 +206,7 @@ def edit_book(book_id):
 def delete_book(book_id):
     book = Book.query.get_or_404(book_id)
     if current_user.role.name != 'admin':
-        flash('У вас недостаточно прав для удаления этой книги')
+        flash('У вас недостаточно прав для выполнения данного действия')
         return redirect(url_for('index'))
 
     try:
