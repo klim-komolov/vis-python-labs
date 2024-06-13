@@ -1,13 +1,13 @@
 from flask import Flask, render_template, redirect, url_for, flash, request
+from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from datetime import datetime
-import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import os
 import hashlib
-import bleach 
+import bleach
 
 app = Flask(__name__)
 application = app
@@ -78,25 +78,6 @@ class BooksGenres(db.Model):
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id', ondelete='CASCADE'), primary_key=True)
 
 
-
-from flask import Flask, render_template, redirect, url_for, flash, request
-from flask_login import LoginManager, login_user, logout_user, current_user, login_required
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-import os
-import hashlib
-import bleach
-
-app = Flask(__name__)
-app.config.from_object('config.Config')
-
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-
-# Определение моделей...
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -104,10 +85,10 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        logins = request.form['login']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
+        user = User.query.filter_by(login=logins).first()
+        if user and check_password_hash(user.password_hash, password):
             login_user(user)
             flash('Вы успешно вошли в систему.')
             return redirect(url_for('index'))
@@ -125,31 +106,14 @@ def logout():
 @app.route('/')
 def index():
     page = request.args.get('page', 1, type=int)
-    books = Book.query.order_by(Book.year.desc()).paginate(page, 10, False)
-    return render_template('index.html', books=books.items, pagination=books)
+    books_pagination = Book.query.order_by(Book.year.desc()).paginate(page, 10, False)
+    books = books_pagination.items
+    return render_template('index.html', books=books_pagination, pagination=books_pagination)
 
 @app.route('/book/<int:book_id>')
 def book(book_id):
     book = Book.query.get_or_404(book_id)
     return render_template('book.html', book=book)
-
-@app.route('/book/delete/<int:book_id>', methods=['POST'])
-@login_required
-def delete_book(book_id):
-    book = Book.query.get_or_404(book_id)
-    if current_user.role.name != 'admin':
-        flash('У вас недостаточно прав для удаления этой книги')
-        return redirect(url_for('index'))
-
-    try:
-        db.session.delete(book)
-        db.session.commit()
-        flash('Книга успешно удалена')
-    except Exception as e:
-        db.session.rollback()
-        flash('Произошла ошибка при удалении книги')
-
-    return redirect(url_for('index'))
 
 @app.route('/book/add', methods=['GET', 'POST'])
 @login_required
@@ -213,7 +177,7 @@ def edit_book(book_id):
 
     if request.method == 'POST':
         book.title = request.form['title']
-        book.description = request.form['description']
+        book.description = bleach.clean(request.form['description'])
         book.year = request.form['year']
         book.publisher = request.form['publisher']
         book.author = request.form['author']
@@ -235,6 +199,24 @@ def edit_book(book_id):
             return render_template('edit_book.html', book=book, genres=Genre.query.all())
 
     return render_template('edit_book.html', book=book, genres=Genre.query.all())
+
+@app.route('/book/delete/<int:book_id>', methods=['POST'])
+@login_required
+def delete_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    if current_user.role.name != 'admin':
+        flash('У вас недостаточно прав для удаления этой книги')
+        return redirect(url_for('index'))
+
+    try:
+        db.session.delete(book)
+        db.session.commit()
+        flash('Книга успешно удалена')
+    except Exception as e:
+        db.session.rollback()
+        flash('Произошла ошибка при удалении книги')
+
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
