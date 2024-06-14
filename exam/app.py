@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, abort, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -82,6 +82,22 @@ class Review(db.Model):
 class BooksGenres(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey('book.id', ondelete='CASCADE'), primary_key=True)
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id', ondelete='CASCADE'), primary_key=True)
+
+class Collection(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='collections')
+    books = db.relationship('Book', secondary='collection_books', back_populates='collections')
+
+class CollectionBooks(db.Model):
+    __tablename__ = 'collection_books'
+    collection_id = db.Column(db.Integer, db.ForeignKey('collection.id'), primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), primary_key=True)
+
+User.collections = db.relationship('Collection', back_populates='user', lazy=True)
+Book.collections = db.relationship('Collection', secondary='collection_books', back_populates='books')
+
 
 @property
 def average_rating(self):
@@ -227,7 +243,7 @@ def delete_book(book_id):
     book = Book.query.get_or_404(book_id)
     cover = book.cover
     if current_user.role.name != 'admin':
-        flash('У вас недостаточно прав для выполнения данного действия.')
+        flash('У вас недостаточно прав для выполнения данного действия')
         return redirect(url_for('index'))
     
     try:
@@ -240,7 +256,7 @@ def delete_book(book_id):
         flash('Книга успешно удалена.')
     except Exception as e:
         db.session.rollback()
-        flash('Ошибка при удалении книги. Попробуйте еще раз.',)
+        flash('Ошибка при удалении книги. Попробуйте еще раз.')
     
     return redirect(url_for('index'))
 
@@ -259,11 +275,47 @@ def add_review(book_id):
         review = Review(rating=rating, text=text, user_id=current_user.id, book_id=book_id)
         db.session.add(review)
         db.session.commit()
-        flash('Рецензия успешно добавлена.')
+        flash('Рецензия успешно добавлена')
         return redirect(url_for('book_detail', book_id=book_id))
 
     return render_template('add_review.html', book=book)
 
+@app.route('/collections', methods=['GET'])
+@login_required
+def collections():
+    collections = Collection.query.filter_by(user_id=current_user.id).all()
+    return render_template('collections.html', collections=collections)
+
+@app.route('/collection/add', methods=['POST'])
+@login_required
+def add_collection():
+    name = request.form.get('name')
+    new_collection = Collection(name=name, user_id=current_user.id)
+    db.session.add(new_collection)
+    db.session.commit()
+    flash('Подборка успешно добавлена!', 'success')
+    return redirect(url_for('collections'))
+
+@app.route('/collection/<int:collection_id>', methods=['GET'])
+@login_required
+def view_collection(collection_id):
+    collection = Collection.query.get_or_404(collection_id)
+    if collection.user_id != current_user.id:
+        abort(403)
+    return render_template('collection_books.html', collection=collection)
+
+@app.route('/book/<int:book_id>/add_to_collection', methods=['POST'])
+@login_required
+def add_book_to_collection(book_id):
+    collection_id = request.form.get('collection_id')
+    collection = Collection.query.get_or_404(collection_id)
+    if collection.user_id != current_user.id:
+        abort(403)
+    book = Book.query.get_or_404(book_id)
+    collection.books.append(book)
+    db.session.commit()
+    flash('Книга успешно добавлена в подборку!', 'success')
+    return redirect(url_for('book_detail', book_id=book_id))
 
 if __name__ == '__main__':
     app.run(debug=True)

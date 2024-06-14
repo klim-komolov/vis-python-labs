@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ collection.name }}</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Автор</th>
+            <th>Жанры</th>
+            <th>Год</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for book in collection.books %}
+        <tr>
+            <td>{{ book.title }}</td>
+            <td>{{ book.author }}</td>
+            <td>
+                {% for genre in book.genres %}
+                    {{ genre.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            <td>{{ book.year }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('collections') }}" class="btn btn-primary">Назад</a>
+{% endblock %}

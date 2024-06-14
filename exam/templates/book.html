@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>{{ book.title }}</h1>
-<img src="{{ url_for('static', filename='covers/' ~ book.cover.file_name) }}" alt="{{ book.title }}">
+<img src="{{ url_for('static', filename='covers/' ~ book.cover.file_name) }}" alt="{{ book.title }}" style="max-width: 300px; height: auto;">
 <p><strong>Автор:</strong> {{ book.author }}</p>
 <p><strong>Год:</strong> {{ book.year }}</p>
 <p><strong>Жанры:</strong>
@@ -20,9 +20,9 @@
     <div>{{ review.text | safe }}</div>
 {% endfor %}
 
-{% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator']  %}
+{% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator','user']  %}
     {% if not book.reviews | selectattr('user_id', 'equalto', current_user.id) | list %}
-        <a href="{{ url_for('add_review', book_id=book.id) }}" class="btn btn-primary">Написать рецензию</a>
+        <a href="{{ url_for('add_review', book_id=book.id) }}" class="btn btn-primary mt-2">Написать рецензию</a>
     {% else %}
         {% for review in book.reviews %}
             {% if review.user_id == current_user.id %}
@@ -34,5 +34,34 @@
         {% endfor %}
     {% endif %}
 {% endif %}
+{% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator','user']  %}
+    <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addBookToCollectionModal">Добавить в подборку</button>
+{% endif %}
+<div class="modal fade" id="addBookToCollectionModal" tabindex="-1" aria-labelledby="addBookToCollectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBookToCollectionModalLabel">Добавить в подборку</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ url_for('add_book_to_collection', book_id=book.id) }}" method="post">
+          <div class="mb-3">
+            <label for="collectionSelect" class="form-label">Выберите подборку</label>
+            <select class="form-select" id="collectionSelect" name="collection_id" required>
+              {% for collection in current_user.collections %}
+                <option value="{{ collection.id }}">{{ collection.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Добавить</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<a href="{{ url_for('index') }}" class="btn btn-primary mt-2">Назад к списку</a>
 {% endblock %}
 
