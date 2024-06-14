@@ -34,9 +34,7 @@
                     <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-warning">Редактировать</a>
                 {% endif %}
                 {% if current_user.is_authenticated and current_user.role.name == 'admin' %}
-                <form action="{{ url_for('delete_book', book_id=book.id) }}" method="post" style="display:inline;">
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить эту книгу?');">Удалить</button>
-                </form>
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-book-id="{{ book.id }}" data-book-title="{{ book.title }}">Удалить</button>
                 {% endif %}
             </td>
         </tr>
@@ -70,4 +68,24 @@
         {% endif %}
     </ul>
 </nav>
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Удаление книги</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Вы уверены, что хотите удалить книгу <span id="bookTitle"></span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Да</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
 {% endblock %}

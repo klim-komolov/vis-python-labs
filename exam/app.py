@@ -147,6 +147,7 @@ def add_book():
 
         cover = request.files['cover']
         cover_data = cover.read()
+        cover.seek(0)
         cover_hash = hashlib.md5(cover_data).hexdigest()
         cover_record = Cover.query.filter_by(md5_hash=cover_hash).first()
 
@@ -157,7 +158,7 @@ def add_book():
                 md5_hash=cover_hash
             )
             db.session.add(cover_record)
-            db.session.flush()  # Получить cover_record.id до коммита
+            db.session.flush() 
 
         new_book = Book(
             title=title,
